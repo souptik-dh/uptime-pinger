@@ -199,6 +199,8 @@ $path = '/' . trim((string) preg_replace('#^/index\.php#', '', $path), '/');
 
 // A ping can take up to 60s on a cold start.
 extend_time_limit(PING_TIMEOUT_S + 30);
+// Creates data/config.json (with the cron key) on the first visit, not only on the first cron run.
+config();
 
 try {
     route($_SERVER['REQUEST_METHOD'] ?? 'GET', $path);

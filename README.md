@@ -47,7 +47,9 @@ instead:
 https://your-domain/api/cron.php?key=CRON_KEY
 ```
 
-`CRON_KEY` is in `api/data/config.json`, which is created the first time the app runs (open it in File Manager).
+`CRON_KEY` is in `api/data/config.json`, which is created the first time the site is opened (open it in File
+Manager; on InfinityFree it is under `htdocs/api/data/`). If it is missing, open `https://your-domain/api/cron.php`
+in a browser once: it shows "Forbidden" but creates the file.
 
 ## Run 24/7 on InfinityFree (GitHub Actions)
 
