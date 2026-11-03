@@ -1,0 +1,7 @@
+# Database, sessions and cron key live here. Never serve them.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>

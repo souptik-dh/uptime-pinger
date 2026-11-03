@@ -1,0 +1,107 @@
+<header class="top glass">
+  <div class="brand"><img src="logo-96.png" alt="" width="34" height="34" />Uptime Pinger</div>
+  <nav class="summary">
+    <button class="btn ghost" (click)="scrollToAuth('login')">Sign in</button>
+    <button class="btn primary" (click)="scrollToAuth('signup')">Get started</button>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-logo">
+    <img src="logo.png" alt="Uptime Pinger logo" width="112" height="112" />
+  </div>
+  <span class="eyebrow"><span class="live-dot"></span>Server-side keep-warm for Render</span>
+  <h1>Keep your Render apps <span class="grad-text">awake.</span></h1>
+  <p class="lead">Free Render instances sleep after 15 minutes idle. Uptime Pinger knocks on a schedule, so the next visitor never waits for a cold start.</p>
+  <div class="hero-cta">
+    <button class="btn primary lg" (click)="scrollToAuth('signup')">Create a free account</button>
+    <button class="btn lg" (click)="showDemo()">See it ping</button>
+  </div>
+  <ul class="badges">
+    <li>No card</li>
+    <li>Unlimited sites</li>
+    <li>Last 100 pings kept</li>
+  </ul>
+</section>
+
+<section class="steps-wrap">
+  <h2 class="section-title">Three steps, then forget about it</h2>
+  <ol class="steps">
+    <li class="card step">
+      <span class="step-num">1</span>
+      <h3>Make an account</h3>
+      <p>An email and a password. No card, no trial clock.</p>
+    </li>
+    <li class="card step">
+      <span class="step-num">2</span>
+      <h3>Paste your Render URL</h3>
+      <p>Give it a name. Add as many sites as you like, there is no limit.</p>
+    </li>
+    <li class="card step">
+      <span class="step-num">3</span>
+      <h3>Close the tab</h3>
+      <p>The server knocks every 10 minutes. Your app stays warm while you do something else.</p>
+    </li>
+  </ol>
+</section>
+
+<section id="demo" class="terminal-wrap">
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span class="lights"><i></i><i></i><i></i></span>
+      <span class="terminal-name">scheduler.log</span>
+      <button class="btn sm" (click)="simulate()" [disabled]="simulating()">Simulate ping</button>
+    </div>
+    <pre class="terminal-body">@for (line of log(); track $index) {<span [class]="'log ' + line.kind">{{ line.text }}</span>
+}<span class="prompt">$</span><span class="caret"></span></pre>
+  </div>
+  <p class="muted caption">Example output. Your own sites show up on your dashboard.</p>
+</section>
+
+<section>
+  <h2 class="section-title">What you get</h2>
+  <p class="muted center">Small tool, no padding</p>
+  <div class="features">
+    @for (f of features; track f.title) {
+      <article class="card feature">
+        <span class="feature-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="f.icon" /></svg>
+        </span>
+        <h3>{{ f.title }}</h3>
+        <p>{{ f.body }}</p>
+        <span class="tag">{{ f.tag }}</span>
+      </article>
+    }
+  </div>
+</section>
+
+<section id="auth" class="auth-wrap">
+  <div class="card auth">
+    <img class="auth-logo" src="logo-96.png" alt="" width="48" height="48" />
+    <h2>{{ mode() === 'signup' ? 'Create your account' : 'Welcome back' }}</h2>
+    <div class="tabs" role="tablist">
+      <button role="tab" [class.active]="mode() === 'signup'" (click)="switchMode('signup')">Create account</button>
+      <button role="tab" [class.active]="mode() === 'login'" (click)="switchMode('login')">Sign in</button>
+    </div>
+    <form (ngSubmit)="submit()" class="auth-form">
+      <label>Email
+        <input name="email" type="email" autocomplete="email" required [(ngModel)]="email" />
+      </label>
+      <label>Password
+        <input name="password" type="password" required minlength="8"
+               [attr.autocomplete]="mode() === 'signup' ? 'new-password' : 'current-password'"
+               [(ngModel)]="password" />
+      </label>
+      @if (mode() === 'signup') { <span class="hint">At least 8 characters.</span> }
+      @if (error()) { <p class="error">{{ error() }}</p> }
+      <button class="btn primary lg" type="submit" [disabled]="busy()">
+        {{ busy() ? 'Please wait…' : mode() === 'signup' ? 'Create account' : 'Sign in' }}
+      </button>
+    </form>
+  </div>
+</section>
+
+<footer class="footer">
+  <img src="logo-96.png" alt="" width="20" height="20" />
+  <span>Uptime Pinger · keeps Render apps warm</span>
+</footer>

@@ -1,0 +1,157 @@
+<header class="top glass">
+  <div class="brand"><img src="logo-96.png" alt="" width="34" height="34" />Uptime Pinger</div>
+  <div class="summary">
+    <span class="user-chip"><span class="avatar">{{ (api.user()?.email ?? '?')[0].toUpperCase() }}</span>{{ api.user()?.email }}</span>
+    <button class="btn ghost" (click)="api.logout()">Sign out</button>
+  </div>
+</header>
+
+<svg width="0" height="0" class="defs" aria-hidden="true">
+  <defs>
+    <linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c1cf8" /><stop offset=".5" stop-color="#3b5bff" /><stop offset="1" stop-color="#00d4f0" />
+    </linearGradient>
+    <linearGradient id="spark-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c1cf8" /><stop offset=".55" stop-color="#3b5bff" /><stop offset="1" stop-color="#00d4f0" />
+    </linearGradient>
+    <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b3df5" stop-opacity=".28" /><stop offset="1" stop-color="#00d4f0" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<section class="tiles">
+  <div class="tile"><span class="tile-label">Sites</span><span class="tile-value">{{ api.sites().length }}</span></div>
+  <div class="tile"><span class="tile-label">Up</span><span class="tile-value up">{{ api.upCount() }}</span></div>
+  <div class="tile"><span class="tile-label">Down</span><span class="tile-value down">{{ api.downCount() }}</span></div>
+  <div class="tile">
+    <span class="tile-label">Uptime</span>
+    <span class="tile-value">{{ overall().uptime == null ? '—' : overall().uptime + '%' }}</span>
+  </div>
+  <div class="tile"><span class="tile-label">Avg response</span><span class="tile-value">{{ formatMs(overall().avgMs) }}</span></div>
+</section>
+
+<form class="add card" (ngSubmit)="addSite()">
+  <h2>Add a site</h2>
+  <div class="add-row">
+    <input name="name" placeholder="Name (optional)" [(ngModel)]="newName" />
+    <input name="url" type="url" placeholder="https://your-app.onrender.com/" required [(ngModel)]="newUrl" />
+    <label class="interval">
+      Every
+      <select name="interval" [(ngModel)]="newInterval">
+        @for (n of intervals; track n) { <option [ngValue]="n">{{ n }} min</option> }
+      </select>
+    </label>
+    <button class="btn primary" type="submit" [disabled]="adding()">{{ adding() ? 'Pinging…' : 'Add' }}</button>
+  </div>
+</form>
+
+@if (error()) { <p class="error banner">{{ error() }}</p> }
+
+<section class="grid">
+  @for (v of views(); track v.site.id) {
+    @let st = status(v);
+    <article class="card site" [class.paused]="!v.site.enabled">
+      <div class="card-head">
+        <span [class]="'dot ' + st" [title]="st"></span>
+        <div class="title">
+          <h2>{{ v.site.name }}</h2>
+          <a [href]="v.site.url" target="_blank" rel="noopener">{{ v.site.url }}</a>
+        </div>
+        <span [class]="'status-label ' + st">{{ st === 'pending' ? 'pinging' : st }}</span>
+        <button class="btn ghost icon" (click)="remove(v.site)" title="Remove site" aria-label="Remove site">✕</button>
+      </div>
+
+      <div class="site-body">
+        <svg class="ring" viewBox="0 0 56 56" role="img" [attr.aria-label]="'Uptime ' + (v.uptime ?? 0) + '%'">
+          <circle cx="28" cy="28" r="22" class="ring-track" />
+          <circle cx="28" cy="28" r="22" class="ring-fill" [class.warn]="(v.uptime ?? 100) < 95" [class.empty-ring]="!v.uptime"
+                  [attr.stroke-dasharray]="ringDash(v.uptime)" transform="rotate(-90 28 28)" />
+          <text x="28" y="31" text-anchor="middle">{{ v.uptime == null ? '—' : (v.uptime | number: '1.0-0') }}</text>
+        </svg>
+        <dl class="stats">
+          <div><dt>Last</dt><dd [class.down]="v.last && !v.last.ok" [title]="result(v.last)">{{ result(v.last) }}</dd></div>
+          <div><dt>Response</dt><dd>{{ formatMs(v.last?.ms) }}</dd></div>
+          <div><dt>Avg</dt><dd>{{ formatMs(v.avgMs) }}</dd></div>
+          <div><dt>Last ping</dt><dd>{{ ago(v.site.lastPingAt) }}</dd></div>
+          <div><dt>Next ping</dt><dd>{{ nextIn(v.site) }}</dd></div>
+          <div><dt>Pings</dt><dd>{{ v.site.history.length }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="chart">
+        <div class="chart-label"><span>Response time</span>@if (v.chart) {<span>max {{ formatMs(v.chart.maxMs) }}</span>}</div>
+        @if (v.chart) {
+          <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="none" class="spark">
+            <path [attr.d]="v.chart.area" class="spark-area" />
+            <path [attr.d]="v.chart.line" class="spark-line" vector-effect="non-scaling-stroke" />
+            @for (f of v.chart.fails; track $index) {
+              <line [attr.x1]="f.x" [attr.x2]="f.x" y1="0" [attr.y2]="H" class="spark-fail" vector-effect="non-scaling-stroke" />
+            }
+          </svg>
+        } @else {
+          <p class="muted empty">Needs a couple of pings to draw.</p>
+        }
+      </div>
+
+      <div class="chart">
+        <div class="chart-label"><span>Status, last {{ v.site.history.length }}</span></div>
+        <div class="history">
+          @for (h of v.site.history; track h.at) {
+            <span [class]="'bar ' + (h.ok ? 'up' : 'down')"
+                  [title]="localTime(h.at) + ' · ' + result(h) + ' · ' + formatMs(h.ms)"></span>
+          } @empty {
+            <span class="muted">No pings yet</span>
+          }
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="interval">
+          Every
+          <select [ngModel]="v.site.intervalMin" (ngModelChange)="run(api.updateSite(v.site.id, { intervalMin: $event }))">
+            @for (n of intervals; track n) { <option [ngValue]="n">{{ n }} min</option> }
+          </select>
+        </label>
+        <label class="switch">
+          <input type="checkbox" [checked]="v.site.enabled"
+                 (change)="run(api.updateSite(v.site.id, { enabled: !v.site.enabled }))" />
+          <span>Scheduled</span>
+        </label>
+        <div class="spacer"></div>
+        <button class="btn" (click)="toggleHistory(v.site.id)">{{ expanded().has(v.site.id) ? 'Hide' : 'History' }}</button>
+        <button class="btn primary" (click)="run(api.pingNow(v.site.id))" [disabled]="st === 'pending'">Ping now</button>
+      </div>
+
+      @if (expanded().has(v.site.id)) {
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>Time (local)</th><th>Result</th><th>Response</th></tr></thead>
+            <tbody>
+              @for (h of reversed(v.site.history); track h.at) {
+                <tr [class.fail]="!h.ok">
+                  <td>{{ localTime(h.at) }}</td>
+                  <td>{{ h.ok ? 'OK' : 'FAIL' }} {{ result(h) }}</td>
+                  <td>{{ formatMs(h.ms) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  } @empty {
+    <p class="muted empty-state">No sites yet. Paste a Render URL above and the server takes it from there.</p>
+  }
+</section>
+
+<p class="note">
+  While this page is open, a site is pinged as soon as its timer reaches zero. When it's closed, the server checks
+  every minute and pings any site that is due. A response below 500 counts as up; 5xx, network errors and no reply within 60s count as down.
+  Render's free plan gives each workspace 750 instance hours a month, and one site kept awake 24/7 uses about 744.
+</p>
+
+<footer class="footer">
+  <img src="logo-96.png" alt="" width="20" height="20" />
+  <span>Uptime Pinger · keeps Render apps warm</span>
+</footer>

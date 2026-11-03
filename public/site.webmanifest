@@ -1,0 +1,13 @@
+{
+  "name": "Uptime Pinger",
+  "short_name": "Pinger",
+  "description": "Keeps Render free instances warm with server-side pings.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0a1a",
+  "theme_color": "#4f35f3",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

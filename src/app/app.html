@@ -1,0 +1,7 @@
+@if (api.user() === undefined) {
+  <div class="loading"><img src="logo-96.png" alt="Loading" width="56" height="56" /></div>
+} @else if (api.user()) {
+  <app-dashboard />
+} @else {
+  <app-landing />
+}
