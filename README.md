@@ -62,9 +62,23 @@ the way a browser does, so the dashboard keeps its history.
    of its 2,000 free minutes in about a week at this rate). Secrets stay private either way.
 2. In the repo, open *Settings > Secrets and variables > Actions*:
    - Secret `CRON_URL` = `https://your-domain/api/cron.php?key=CRON_KEY`
-   - Variable `PING_URLS` = your Render URLs, space separated (optional; it defaults to the two current sites)
+   - Variable `PING_URLS` = your Render URLs, space separated (optional; it defaults to the four current sites)
 3. Open *Actions > Keep warm > Run workflow* once to check that it works. A run turns red when a Render site is
    down, and GitHub emails you.
+4. **Trigger it from cron-job.org.** GitHub runs `schedule:` best effort and on small repos often skips hours
+   (seen here: 2 runs in 19 hours), so Render falls asleep. Let an external timer start the workflow instead:
+   - Create a fine-grained token at *GitHub > Settings > Developer settings > Personal access tokens >
+     Fine-grained tokens*: only this repository, permission *Actions: Read and write*.
+   - At [cron-job.org](https://cron-job.org) create a job: every 5 minutes, URL
+     `https://api.github.com/repos/souptik-dh/uptime-pinger/actions/workflows/keep-warm.yml/dispatches`,
+     and under *Advanced*: method `POST`, body `{"ref":"main"}`, headers
+     `Authorization: Bearer YOUR_TOKEN`, `Accept: application/vnd.github+json`.
+     A good response is `204 No Content`.
+   - Optional extra safety: add one more cron-job.org job per Render URL (plain GET, every 10 minutes). Render
+     has no bot check, so these keep the sites warm even if GitHub is down.
+
+   The `schedule:` in the workflow stays as a backup. When the token expires, the job starts failing with
+   `401` and cron-job.org emails you; create a new token and paste it in.
 
 **Updating:** build again and extract the new zip over the old files. Your database and config in `api/data/` are
 not in the zip, so they stay as they are.

@@ -6,8 +6,8 @@ name: Keep warm
 
 on:
   schedule:
-    # GitHub delays scheduled runs at busy times (often the top of the hour); off-round minutes help, and
-    # every 5 minutes leaves room for a late run before Render's 15 minute idle timer.
+    # Backup only: GitHub runs schedules best effort and can skip hours of them. The reliable trigger is an
+    # external cron (cron-job.org) calling workflow_dispatch every 5 minutes; see README.
     - cron: '2-59/5 * * * *'
   workflow_dispatch:
 
@@ -24,13 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           sparse-checkout: scripts
       - name: Ping sites and run the scheduler
         run: node scripts/keep-warm.mjs
         env:
-          PING_URLS: ${{ vars.PING_URLS || 'https://siddheswari-pathlab.onrender.com/ https://jido-pathlabs.onrender.com/' }}
+          PING_URLS: ${{ vars.PING_URLS || 'https://siddheswari-pathlab.onrender.com/ https://jido-pathlabs.onrender.com/ https://jido-dukaan.onrender.com/ https://jido-sms-gateway.onrender.com/' }}
           CRON_URL: ${{ secrets.CRON_URL }}
       # GitHub turns off scheduled workflows after 60 days without a commit; re-enabling resets that clock.
       - name: Keep this schedule enabled
